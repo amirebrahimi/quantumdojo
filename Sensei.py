@@ -46,16 +46,18 @@ def create_random_circuit(num_qubits, depth=1, only_gates=None):
             only_gates.append([ 'cx', 'cz' ])
     
     for d in range(depth):
-        for q in range(num_qubits):            
-            if num_qubits > 1:
-                other_qubits = list(range(num_qubits))
-                other_qubits.remove(q)
+        for q in range(num_qubits):
+            other_qubits = list(range(num_qubits))
+            other_qubits.remove(q)            
+            q2 = None
+            q3 = None
             
+            if num_qubits >= 2:
                 q2 = random.choice(other_qubits)
                 other_qubits.remove(q2)
+            if num_qubits >= 3:
                 q3 = random.choice(other_qubits)
-                other_quibts.remove(q3)
-                print(other_qubits)
+                other_qubits.remove(q3)
             
             theta = random.uniform(0, math.pi)
             phi = random.uniform(0, math.pi)
@@ -313,7 +315,7 @@ class Sensei:
                 else:
                     gate_set = ['h', 'x', 'y', 'z', 's', 't', 'sdg', 'tdg', 'cx', 'rx', 'ry', 'rz', 'cy', 'cz', 'ccx', 'u3']
                     
-            print("Stage %s: %s qubits, %s depth, %s verification level" % (stage, num_qubits, depth, level))
+            print("Stage %s: %s qubits, %s depth, verification level %s" % (stage, num_qubits, depth, level))
             print("Using gate set: %s" % gate_set)
             self.__hidden_circ = HiddenCircuit(num_qubits, depth=depth, gate_set=gate_set, level=level)
             return self.__hidden_circ
@@ -335,6 +337,13 @@ class Sensei:
         else:
             print("You must practice() first before submitting.")
             return
+        
+    def _test_all():
+        # Test all levels
+        sensei = Sensei(42)
+        for i in range(125):
+            hc = sensei.practice()
+            sensei.submit(sensei.__dict__['_Sensei__hidden_circ'].__dict__['_HiddenCircuit__random_circ'])
 
 
 # In[ ]:
