@@ -192,19 +192,29 @@ def check_circuit(random_circ, circ, level=0, log=True):
     # hellinger fidelity between the statevectors - is this the same as the next level though?
     fidelity = [compare_statevector_fidelity(random_circ, circ)]
     if debug:
-        print("0: Hellinger fidelity between statevectors (disergards phase): %s" % fidelity[0])
+        print("0: Hellinger fidelity between statevectors (disregards phase): %s" % fidelity[0])
     
     # full statevector equality (statevectors exactly match)
     if level >= 1:        
         fidelity.append(compare_statevector_with_phase(random_circ, circ))
         if debug:
             print("1: Statevector equality including phase: %s" % fidelity[1])
+            if not np.isclose(fidelity[1], 1.0):
+                with np.printoptions(precision=3, suppress=True):                
+                    print(" current statevector: %s" % run_statevector(circ))
+                    print(" target statevector: %s" % run_statevector(random_circ))
+#                 print(" difference between statevectors: %s" % (run_statevector(random_circ) - run_statevector(circ)))
 
     # the norm of the difference between the two circuit (matrices)
     if level >= 2:
         fidelity.append(compare_circuit_norm(random_circ, circ))
         if debug:
             print("2: Norm of the difference between circuit matrices: %s" % fidelity[2])
+            if not np.isclose(fidelity[2], 1.0):
+                with np.printoptions(precision=3, suppress=True):
+                    print(" current unitary:\n %s" % run_unitary(circ))
+                    print(" target unitary:\n %s" % run_unitary(random_circ))
+#                     print(" difference between matrices:\n %s" % (run_unitary(random_circ) - run_unitary(circ)))
         
     # full equivalency
     if level >= 3:
