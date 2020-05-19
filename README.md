@@ -5,3 +5,9 @@ A Quantum Computing Dojo for improving your intuition
 
 ## To run
 `jupyter notebook Dojo.ipynb`
+
+## As a developer
+1. Run Dojo.ipynb and additionally Sensei.ipynb
+2. Develop locally in Sensei.ipynb if need be 
+3. Export to Sensei.py (make sure to remove any main execution code!):
+   `jupyter nbconvert --to script Sensei.ipynb`

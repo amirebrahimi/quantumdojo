@@ -33,7 +33,7 @@ basis_gates = noise_model.basis_gates
 get_ipython().run_line_magic('qiskit_version_table', '')
 
 
-# In[15]:
+# In[4]:
 
 
 def create_random_circuit(num_qubits, depth=1, only_gates=None):
@@ -158,7 +158,7 @@ def run_unitary(circ, disp=False):
     return unitary
 
 
-# In[48]:
+# In[6]:
 
 
 def compare_statevector_fidelity(random_circ, circ):
@@ -185,6 +185,16 @@ def compare_circuit_norm(random_circ, circ):
     su = run_unitary(circ)
     return 1 - np.tanh(np.linalg.norm(ru - su, ord=2)) # convert L2 norm to a [0-1) value
 
+def get_verification_level_text(level):
+    if level == 0:
+        return "0: Outcome probabilities must match (disregards phase)"
+    elif level == 1:
+        return "1: Statevectors must match (including phase)"
+    elif level == 2:
+        return "2: Circuit matrices must match"
+    elif level == 3:
+        return "3: Circuits must match exactly"
+
 def check_circuit(random_circ, circ, level=0, log=True):
     # TODO: do we want to print each level's fidelity?
     debug = True and log
@@ -192,13 +202,13 @@ def check_circuit(random_circ, circ, level=0, log=True):
     # hellinger fidelity between the statevectors - is this the same as the next level though?
     fidelity = [compare_statevector_fidelity(random_circ, circ)]
     if debug:
-        print("0: Hellinger fidelity between statevectors (disregards phase): %s" % fidelity[0])
+        print("%s: %s (Hellinger fidelity)" % (get_verification_level_text(0), fidelity[0]))
     
     # full statevector equality (statevectors exactly match)
     if level >= 1:        
         fidelity.append(compare_statevector_with_phase(random_circ, circ))
         if debug:
-            print("1: Statevector equality including phase: %s" % fidelity[1])
+            print("%s: %s (Statevector equality)" % (get_verification_level_text(1), fidelity[1]))
             if not np.isclose(fidelity[1], 1.0):
                 with np.printoptions(precision=3, suppress=True):                
                     print(" current statevector: %s" % run_statevector(circ))
@@ -209,7 +219,7 @@ def check_circuit(random_circ, circ, level=0, log=True):
     if level >= 2:
         fidelity.append(compare_circuit_norm(random_circ, circ))
         if debug:
-            print("2: Norm of the difference between circuit matrices: %s" % fidelity[2])
+            print("%s: %s (Norm of the difference between circuit matrices)" % (get_verification_level_text(2), fidelity[2]))
             if not np.isclose(fidelity[2], 1.0):
                 with np.printoptions(precision=3, suppress=True):
                     print(" current unitary:\n %s" % run_unitary(circ))
@@ -220,14 +230,14 @@ def check_circuit(random_circ, circ, level=0, log=True):
     if level >= 3:
         fidelity.append(random_circ == circ)
         if debug:
-            print("3: Circuit equality: %s" % fidelity[3])
+            print("%s: %s" % (get_verification_level_text(3), fidelity[3]))            
     
     total_fidelity = np.mean(fidelity)
     
-    if np.isclose(total_fidelity, 1.0):
+    if np.isclose(total_fidelity, 1.0, rtol=1e-03, atol=1e-03):
         if log:
             print()
-            print("Congratulations, your intuition has grown stronger. Here is the circuit:")
+            print("Congratulations, your intuition has grown stronger. This was the hidden circuit:")
             print(random_circ)
         return True
     else:
@@ -254,8 +264,12 @@ class HiddenCircuit:
     def get_empty_circuit(self):
         rc = self.__random_circ
         return QuantumCircuit(rc.num_qubits, rc.num_clbits)
+
+    def prepend(self, append_circ, plot_fn=plot_bloch_multivector):
+        sv = run_statevector(append_circ.combine(self.__random_circ))
+        return plot_fn(sv)
     
-    def probe(self, append_circ, plot_fn=plot_bloch_multivector):
+    def append(self, append_circ, plot_fn=plot_bloch_multivector):
         sv = run_statevector(self.__random_circ.combine(append_circ))
         return plot_fn(sv)
     
@@ -269,7 +283,7 @@ class HiddenCircuit:
         return self.__random_circ == other
 
 
-# In[146]:
+# In[8]:
 
 
 class Sensei:
@@ -282,49 +296,59 @@ class Sensei:
         print()
         print("When you are ready to practice(), prepare to receive a hidden circuit.")
         print()
-        print("You can get_empty_circuit() in order to probe(with_circuit) the hidden circuit.")
-        print("You can check(with_solution) the hidden circuit.")
+        print("You can get_empty_circuit() in order to probe the hidden circuit with prepend() or append().")
+        print("You can also get_empty_circuit() to replicate the hidden circuit and check() to see how close you are.")
         print()
-        print("When you are ready to move to the next stage submit(with_solution) back to me.")
+        print("When you are ready to move to the next stage submit(replicated_circuit) back to me.")
+        print()
         
     def practice(self):
         if self.__hidden_circ is None:
             stage = self.__stage
             # epochs increase with qubit first, then verification levels, and then depth
-            levels_per_depth = 4
+            exercises_per_depth = 3
             depths_per_epoch = 5
-            stages_per_epoch = depths_per_epoch * levels_per_depth
+            stages_per_epoch = depths_per_epoch * exercises_per_depth
             epoch = math.floor(stage / stages_per_epoch)
             num_qubits = math.floor(stage / stages_per_epoch) + 1
-            level = stage % levels_per_depth
             depth = math.floor((stage % stages_per_epoch) / (depths_per_epoch - 1)) + 1
+            level = 0
             
             gate_set = self.__gate_set
             if gate_set is None:
                 # 1 qubit
                 if stage < 10:
                     gate_set = ['h', 'x', 'y', 'z']                    
-                elif stage < 20:
+                    level = 0
+                elif stage < 15:
                     gate_set = ['h', 'x', 'y', 'z', 's', 't']
+                    level = 1
                 # 2 qubits
-                elif stage < 30:
+                elif stage < 20:
                     gate_set = ['h', 'x', 'y', 'z', 's', 't', 'sdg', 'tdg']
-                elif stage < 40:
+                    level = 1
+                elif stage < 30:
                     gate_set = ['h', 'x', 'y', 'z', 's', 't', 'sdg', 'tdg', 'cx']
+                    level = 2
                 # 3 qubits
-                elif stage < 50:
+                elif stage < 45:
                     gate_set = ['h', 'x', 'y', 'z', 's', 't', 'sdg', 'tdg', 'cx', 'rx', 'ry', 'rz']
+                    level = 2
                 # 4 qubits
                 elif stage < 60:
                     gate_set = ['h', 'x', 'y', 'z', 's', 't', 'sdg', 'tdg', 'cx', 'rx', 'ry', 'rz', 'cy', 'cz']
+                    level = 2
                 # 5 qubits
-                elif stage < 80:
+                elif stage < 75:
                     gate_set = ['h', 'x', 'y', 'z', 's', 't', 'sdg', 'tdg', 'cx', 'rx', 'ry', 'rz', 'cy', 'cz', 'ccx']
+                    level = 2
                 else:
                     gate_set = ['h', 'x', 'y', 'z', 's', 't', 'sdg', 'tdg', 'cx', 'rx', 'ry', 'rz', 'cy', 'cz', 'ccx', 'u3']
+                    level = 3
                     
-            print("Stage %s: %s qubits, %s depth, verification level %s" % (stage, num_qubits, depth, level))
+            print("Stage %s: %s qubit(s), circuit depth %s, verification level %s" % (stage, num_qubits, depth, level))
             print("Using gate set: %s" % gate_set)
+            print("%s [must reach this to move on]" % get_verification_level_text(level))
             random.seed(self.__seed + stage)
             self.__hidden_circ = HiddenCircuit(num_qubits, depth=depth, gate_set=gate_set, level=level)
             return self.__hidden_circ
@@ -354,6 +378,7 @@ class Sensei:
             hc = sensei.practice()
             rc = sensei.__dict__['_Sensei__hidden_circ'].__dict__['_HiddenCircuit__random_circ']
             sensei.submit(rc)
+            print()
 #             print(solution)
 
 
