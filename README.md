@@ -1,5 +1,6 @@
 # quantumdojo
-A Quantum Computing Dojo for improving your intuition
+A Quantum Computing Dojo for improving your intuition inspired by [IBM's May 4th, 2020 Quantum Challenge](https://github.com/qiskit-community/may4_challenge) and from discussion with @dncolomer, creator of the YouTube channel _[Quantum Intuition](https://www.youtube.com/channel/UC-2knDbf4kzT3uzWo7iTJyw)_.
+
 
 > "A dōjō is a hall or place for immersive learning or meditation. This is traditionally in the field of martial arts, but has been seen increasingly in other fields, such as meditation and software development. The term literally means "place of the Way" in Japanese." -Wikipedia
 
