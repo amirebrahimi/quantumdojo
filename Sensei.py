@@ -178,7 +178,7 @@ def compare_statevector_equiv(random_circ, circ):
 def compare_statevector_with_phase(random_circ, circ):
     rsv = run_statevector(random_circ)
     sv = run_statevector(circ)
-    return not (rsv - sv).any() # if diff is > 0, then this will fail
+    return not np.any(np.abs(rsv - sv) > 1e-03) # if diff is > 0, then this will fail
 
 def compare_circuit_norm(random_circ, circ):
     ru = run_unitary(random_circ)
