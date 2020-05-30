@@ -30,7 +30,7 @@ basis_gates = noise_model.basis_gates
 # In[3]:
 
 
-get_ipython().run_line_magic('qiskit_version_table', '')
+#%qiskit_version_table
 
 
 # In[4]:
@@ -287,22 +287,28 @@ class HiddenCircuit:
 
 
 class Sensei:
-    def __init__(self, seed, stage=0, gate_set=None):
+    def __init__(self, seed, stage=0, gate_set=None, verbosity=1, auto_submit=False):
         self.__seed = seed
         self.__stage = stage
         self.__hidden_circ = None
         self.__gate_set = gate_set
-        print("Welcome to the dojo. You have chosen a practice governed by the number '%s'" % seed)
-        print()
-        print("When you are ready to practice(), prepare to receive a hidden circuit.")
-        print()
-        print("You can get_empty_circuit() in order to probe the hidden circuit with prepend() or append().")
-        print("You can also get_empty_circuit() to replicate the hidden circuit and check() to see how close you are.")
-        print()
-        print("When you are ready to move to the next stage submit(replicated_circuit) back to me.")
-        print()
+        self.__verbosity = verbosity
+        self.__auto_submit = auto_submit
+        
+        if self.__verbosity >= 1:
+            print("Welcome to the dojo. You have chosen a practice governed by the number '%s'" % seed)
+            print()
+            print("When you are ready to practice(), prepare to receive a hidden circuit.")
+            print()
+            print("You can get_empty_circuit() in order to probe the hidden circuit with prepend() or append().")
+            print("You can also get_empty_circuit() to replicate the hidden circuit and check() to see how close you are.")
+            print()
+            print("When you are ready to move to the next stage submit(replicated_circuit) back to me.")
         
     def practice(self):
+        if self.__auto_submit and self.__hidden_circ is not None             and self.__hidden_circ.__dict__['_HiddenCircuit__unlocked']:
+            self.submit(self.__hidden_circ.__dict__['_HiddenCircuit__random_circ'])
+            
         if self.__hidden_circ is None:
             stage = self.__stage
             # epochs increase with qubit first, then verification levels, and then depth
@@ -348,7 +354,8 @@ class Sensei:
                     
             print("Stage %s: %s qubit(s), circuit depth %s, verification level %s" % (stage, num_qubits, depth, level))
             print("Using gate set: %s" % gate_set)
-            print("%s [must reach this to move on]" % get_verification_level_text(level))
+            if self.__verbosity >= 1:
+                print("%s [must reach this to move on]" % get_verification_level_text(level))
             random.seed(self.__seed + stage)
             self.__hidden_circ = HiddenCircuit(num_qubits, depth=depth, gate_set=gate_set, level=level)
             return self.__hidden_circ
@@ -358,14 +365,23 @@ class Sensei:
         
     def submit(self, solution_circ):
         if self.__hidden_circ is not None:
-            correct = check_circuit(self.__hidden_circ.__dict__['_HiddenCircuit__random_circ'],                                     solution_circ, self.__hidden_circ.__dict__['_HiddenCircuit__level'], log=False)
-            if correct:
-                print("Well done. You are ready for more practice().")
+            show_output = True
+            
+            rc = self.__hidden_circ.__dict__['_HiddenCircuit__random_circ']
+            if self.__auto_submit and solution_circ == rc:
+                correct = True
+                show_output = False
+            else:
+                correct = check_circuit(rc, solution_circ, self.__hidden_circ.__dict__['_HiddenCircuit__level'], log=False)
+            if correct:              
+                if show_output:
+                    print("Well done. You are ready for more practice().")
                 self.__stage = self.__stage + 1
                 self.__hidden_circ = None
                 return
             else:
-                print("You are not ready for more practice(). Submit again when you have proven yourself.")
+                if show_output:
+                    print("You are not ready for more practice(). Submit again when you have proven yourself.")
                 return
         else:
             print("You must practice() first before submitting.")

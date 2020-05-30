@@ -7,6 +7,9 @@ A Quantum Computing Dojo for improving your intuition inspired by [IBM's May 4th
 _NOTE: Requires [qiskit installation](https://qiskit.org/documentation/install.html)_   
 `jupyter notebook Dojo.ipynb`
 
+## To compete or for minimal mode
+`jupyter notebook Compete.ipynb`
+
 ## As a developer
 1. Run Dojo.ipynb and additionally Sensei.ipynb
 2. Develop locally in Sensei.ipynb if need be 
