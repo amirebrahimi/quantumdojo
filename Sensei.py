@@ -267,11 +267,13 @@ class HiddenCircuit:
 
     def prepend(self, append_circ, plot_fn=plot_bloch_multivector):
         sv = run_statevector(append_circ.combine(self.__random_circ))
-        return plot_fn(sv)
+        display(plot_fn(sv))
+        return
     
     def append(self, append_circ, plot_fn=plot_bloch_multivector):
         sv = run_statevector(self.__random_circ.combine(append_circ))
-        return plot_fn(sv)
+        display(plot_fn(sv))
+        return
     
     def __str__(self):
         if self.__unlocked:
