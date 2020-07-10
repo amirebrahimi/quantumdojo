@@ -356,6 +356,7 @@ class Sensei:
                     
             print("Stage %s: %s qubit(s), circuit depth %s, verification level %s" % (stage, num_qubits, depth, level))
             print("Using gate set: %s" % gate_set)
+            print("NOTE: control gates only count towards the depth of the control wire(s)")
             if self.__verbosity >= 1:
                 print("%s [must reach this to move on]" % get_verification_level_text(level))
             random.seed(self.__seed + stage)
